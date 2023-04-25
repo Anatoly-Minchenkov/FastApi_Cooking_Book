@@ -46,27 +46,22 @@ async def read_recipe(recipe_id: int, session: Session = Depends(get_db)):
 @app.post("/recipes/add_recipe")
 def create_recipe(recipe:schemas.Recipe, session: Session = Depends(get_db)):
 
-    # ingredients = [RecipeIngredient(quantity=ri.quantity, ingredient=Ingredient(name=ri.ingredient.name)) for ri in recipe.ingredients]
-
 
     steps = [Step(**step.dict()) for step in recipe.steps]
-    recipe_db = Recipe(name=recipe.name, description=recipe.description, steps=steps)
+    ingredients = [Ingredient(**ingredient.dict()) for ingredient in recipe.ingredients]
+    recipe_db = Recipe(name=recipe.name, description=recipe.description, ingredients=ingredients, steps=steps)
     session.add(recipe_db)
     session.commit()
     session.refresh(recipe_db)
 
-    return recipe
+    ####заполнение уникальными ингридиентами таблицу
+    unique_ingredients = [uniq_ingredient.name for uniq_ingredient in session.query(UniqueIngredient).all()]
+    for i in ingredients:
+        if i.name not in unique_ingredients:
+            session.add(UniqueIngredient(name=i.name))
+            session.commit()
 
-    # ingredients = []
-    # for ri in recipe.ingredients:
-    #     ingredient = Ingredient(name=ri.ingredient.name)
-    #     recipe_ingredient = RecipeIngredient(quantity=ri.quantity, ingredient=ingredient)
-    #     ingredients.append(recipe_ingredient[0])
-
-    # db_recipe = Recipe(name=recipe.name, description=recipe.description, steps=steps)
-    # session.add(db_recipe)
-
-    return 'ok'
+    return recipe_db
 
 
 if __name__ == "__main__":

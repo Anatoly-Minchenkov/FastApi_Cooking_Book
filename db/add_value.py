@@ -26,25 +26,30 @@ for ingredient_name, quantity in [("Пирожок", 32), ("Сахар", 40), ("
 # session.commit()
 
 
+#####пример заполнения со старыми таблицами, без ingridients
 # {
-#     "name": "Пирожок с кругетсами",
-#     "description": "Вкусно",
+#     "name": "Картофель в мундире",
+#     "description": "Жарить не надо",
 #     "steps": [
 #         {
-#             "step_description": "шаг1",
-#             "step_time": 33
+#             "step_description": "сварить",
+#             "step_time": 30
+#         },
+#         {
+#             "step_description": "пожарить",
+#             "step_time": 30
 #         }
 #     ],
 #     "ingredients": [
 #         {
 #             "ingredient": {
-#                 "name": "павидло"
+#                 "name": "картошка"
+#
 #             },
-#             "quantity": 20
+#             "quantity": 2
 #         }
 #     ]
 # }
-
 
 
 
