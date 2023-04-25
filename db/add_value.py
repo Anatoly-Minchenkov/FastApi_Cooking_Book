@@ -1,21 +1,21 @@
 import sqlalchemy as sa
 from sqlalchemy import select
 from sqlalchemy.orm import sessionmaker
-from models import Ingredient, RecipeIngredient, Recipe, Step
+from models import Ingredient, Recipe, Step
 
 
-engine = sa.create_engine('postgresql://bcraft:password@localhost:5432/bcraft')
-#
-Session = sessionmaker(bind=engine)
-session = Session()
-#
-recept_ingredients = []
-for ingredient_name, quantity in [("Пирожок", 32), ("Сахар", 40), ("Кругетсы", 21)]:
-    ingredient = session.query(Ingredient).filter_by(name=ingredient_name).first()
-    if ingredient is None:
-        ingredient = Ingredient(name=ingredient_name)
-        session.add(ingredient)
-    recept_ingredients.append(RecipeIngredient(ingredient=ingredient, quantity=quantity))
+# engine = sa.create_engine('postgresql://bcraft:password@localhost:5432/bcraft')
+# #
+# Session = sessionmaker(bind=engine)
+# session = Session()
+# #
+# recept_ingredients = []
+# for ingredient_name, quantity in [("Пирожок", 32), ("Сахар", 40), ("Кругетсы", 21)]:
+#     ingredient = session.query(Ingredient).filter_by(name=ingredient_name).first()
+#     if ingredient is None:
+#         ingredient = Ingredient(name=ingredient_name)
+#         session.add(ingredient)
+#     recept_ingredients.append(RecipeIngredient(ingredient=ingredient, quantity=quantity))
 
 #ingredients = [RecipeIngredient(ingredient=Ingredient(name=ingredient_name), quantity=quantity)] #пояснялка для ingredients снизу.
 
