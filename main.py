@@ -5,9 +5,9 @@ from connector import get_db
 
 import uvicorn
 from typing import List, Optional
-from fastapi import FastAPI, Depends, HTTPException, Body
+from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy import func, and_
+from sqlalchemy import func
 
 app = FastAPI()
 
@@ -23,8 +23,7 @@ def get_all_recipes(session: Session = Depends(get_db)):
 @app.get("/recipes/{recipe_id}/", response_model=schemas.RecipeGet)
 def get_recipe_by_id(recipe_id: int, session: Session = Depends(get_db)):
     recipe_db = session.query(Recipe).filter_by(id=recipe_id).first()
-    if recipe_db is None:
-        raise HTTPException(status_code=404, detail="Recipe not found")
+    spec_functions.check_recipe_not_none(recipe_db, session)
     return recipe_db
 
 
@@ -37,18 +36,15 @@ def add_new_recipe(recipe: schemas.RecipePost, session: Session = Depends(get_db
     session.add(recipe_db)
     session.commit()
     session.refresh(recipe_db)
-
     spec_functions.check_unique_ingredients(session, ingredients)
-
     return recipe
 
 
-# Обновление информации о рецепте из бд
+# Обновление информации о рецепте по id
 @app.put("/recipes/update/{recipe_id}/")
 def update_recipe_by_id(recipe: schemas.RecipePost, recipe_id: int, session: Session = Depends(get_db)):
     recipe_db = session.query(Recipe).filter_by(id=recipe_id).first()
-    if not recipe_db:
-        return {"error": "Recipe not found"}
+    spec_functions.check_recipe_not_none(recipe_db, session)
     # Удаление старых ингредиентов
     session.query(Ingredient).filter_by(recipe_id=recipe_id).delete()
     # Добавление новых ингредиентов, если есть
@@ -78,23 +74,49 @@ def update_recipe_by_id(recipe: schemas.RecipePost, recipe_id: int, session: Ses
 @app.delete("/recipes/delete/{recipe_id}/")
 def delete_recipe_by_id(recipe_id: int, session: Session = Depends(get_db)):
     recipe_db = session.query(Recipe).filter_by(id=recipe_id).first()
-    if recipe_db is None:
-        session.rollback()
-        raise HTTPException(status_code=404, detail="Recipe not found")
+    spec_functions.check_recipe_not_none(recipe_db, session)
     session.delete(recipe_db)
     session.commit()
     return {"message": f"Recipe with id {recipe_id} has been deleted."}
 
-# Сортировка по времени
+# Сортировка рецептов по общему времени приготовления
 @app.get("/recipes/sort_by_cooking_time", response_model=List[schemas.RecipeGet])
 def sort_recipes_by_time(desc: Optional[bool] = False, session: Session = Depends(get_db)):
+    '''
+    Функция сортирует рецепты по общему времени приготовления.
+    -desc - сортировка в порядке убывания
+    '''
     recipes = session.query(Recipe).join(Step).group_by(Recipe).order_by(func.sum(Step.step_time)).all()
     if desc:
         recipes.reverse()
     return recipes
 
+# Фильтрация по максимальному времени приготовления + сортировка
+@app.get("/recipes/filter_by_cooking_time/{max_cooking_time}", response_model=List[schemas.RecipeGet])
+def filter_recipes_by_time(max_cooking_time: int, gt: Optional[bool] = False, desc: Optional[bool] = False,
+                           session: Session = Depends(get_db)):
+    '''
+    Функция принимает максимальное время, и выводит рецепты, общее время готовки которых не превышает данное число.
+    -gt - необязательный аргумент, вернёт рецепты, время готовки которых превышает переданное
+    -desc - сортировка в порядке убывания
+    '''
+    if gt:
+        recipes = session.query(Recipe).join(Step).group_by(Recipe) \
+            .having(func.sum(Step.step_time) > max_cooking_time).order_by(func.sum(Step.step_time)).all()
+    else:
+        recipes = session.query(Recipe).join(Step).group_by(Recipe) \
+            .having(func.sum(Step.step_time) <= max_cooking_time).order_by(func.sum(Step.step_time)).all()
+    if desc:
+        recipes.reverse()
+    return recipes
+
+# Фильтрация по переданному списку ингредиентов
 @app.post("/recipes/filter_by_ingredients", response_model=List[schemas.RecipeGet]) #
 def filter_recipes_by_ingredients(ingredients: List[str], session: Session = Depends(get_db)):
+    '''
+    Функция принимает список ингредиентов, и возвращает рецепты, в состав которых
+    переданные ингредиенты входят
+    '''
     unique_ingredients = session.query(UniqueIngredient).all()
     unique_ingredient_names = [ingredient.name for ingredient in unique_ingredients] # уникальные имена из бд
     # список поступивших ингредиентов, которые есть в бд
@@ -104,7 +126,6 @@ def filter_recipes_by_ingredients(ingredients: List[str], session: Session = Dep
     # Join между Recipe+Ingredient, фильтрация по имени, группировка по id, и сверка количества ингредиентов группы
     recipes = (session.query(Recipe).join(Ingredient).filter(Ingredient.name.in_(received_ingredients))
                .group_by(Recipe.id).having(func.count(Ingredient.name) == len(received_ingredients)).all())
-
     return recipes
 
 if __name__ == "__main__":
