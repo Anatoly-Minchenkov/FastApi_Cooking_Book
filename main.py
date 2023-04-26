@@ -22,7 +22,7 @@ def get_all_recipes(session: Session = Depends(get_db)):
 # Получение рецепта по id
 @app.get("/recipes/{recipe_id}/", response_model=schemas.RecipeGet)
 def get_recipe_by_id(recipe_id: int, session: Session = Depends(get_db)):
-    recipe_db = session.query(Recipe).filter_by(id=recipe_id).first()
+    recipe_db = spec_functions.get_recipe_by_id(recipe_id, session)
     spec_functions.check_recipe_not_none(recipe_db, session)
     return recipe_db
 
@@ -43,7 +43,7 @@ def add_new_recipe(recipe: schemas.RecipePost, session: Session = Depends(get_db
 # Обновление информации о рецепте по id
 @app.put("/recipes/update/{recipe_id}/")
 def update_recipe_by_id(recipe: schemas.RecipePost, recipe_id: int, session: Session = Depends(get_db)):
-    recipe_db = session.query(Recipe).filter_by(id=recipe_id).first()
+    recipe_db = spec_functions.get_recipe_by_id(recipe_id, session)
     spec_functions.check_recipe_not_none(recipe_db, session)
     # Удаление старых ингредиентов
     session.query(Ingredient).filter_by(recipe_id=recipe_id).delete()
@@ -73,7 +73,7 @@ def update_recipe_by_id(recipe: schemas.RecipePost, recipe_id: int, session: Ses
 # Удаление рецепта из бд
 @app.delete("/recipes/delete/{recipe_id}/")
 def delete_recipe_by_id(recipe_id: int, session: Session = Depends(get_db)):
-    recipe_db = session.query(Recipe).filter_by(id=recipe_id).first()
+    recipe_db = spec_functions.get_recipe_by_id(recipe_id, session)
     spec_functions.check_recipe_not_none(recipe_db, session)
     session.delete(recipe_db)
     session.commit()
