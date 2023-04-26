@@ -1,29 +1,14 @@
 from db.models import *
 from db import schemas
 import spec_functions
+from connector import get_db
+
 import uvicorn
 from typing import List
 from fastapi import FastAPI, Depends, HTTPException
-from sqlalchemy.orm import Session, sessionmaker
-from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
 
 app = FastAPI()
-
-SQLALCHEMY_DATABASE_URL = "postgresql://bcraft:password@localhost:5432/bcraft"
-
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-
-def get_db():
-    db = None
-    try:
-        db = SessionLocal()
-        yield db
-    finally:
-        db.close()
-
-
 # Получение списка всех рецептов
 @app.get("/recipes/", response_model=List[schemas.Recipe])
 def get_all_recipes(session: Session = Depends(get_db)):
@@ -65,7 +50,7 @@ def update_recipe_by_id(recipe: schemas.RecipeUpdate, recipe_id: int, session: S
     # Добавление новых ингредиентов, если есть
     if recipe.ingredients:
         new_ingredients = [Ingredient(name=ingredient.name, quantity=ingredient.quantity, recipe_id=recipe_id)
-                        for ingredient in recipe.ingredients]
+                           for ingredient in recipe.ingredients]
         session.add_all(new_ingredients)
         # Проверка на новые уникальные ингредиенты
         spec_functions.check_unique_ingredients(session, new_ingredients)
