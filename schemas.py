@@ -25,7 +25,7 @@ class Step(BaseModel):
 
 
 class Recipe(BaseModel):
-    id: Optional[int] = '0'
+    # id: Optional[int] = '0'
     name: str
     description: str
     ingredients: List[Ingredient]
@@ -34,5 +34,12 @@ class Recipe(BaseModel):
     class Config:
         orm_mode = True
 
+class RecipeUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    ingredients: Optional[List[Ingredient]]
+    steps: Optional[List[Step]]
 
+    class Config:
+        orm_mode = True
 
