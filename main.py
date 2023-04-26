@@ -2,22 +2,24 @@ from db.models import *
 from db import schemas
 import spec_functions
 from connector import get_db
-
+from collections import OrderedDict
 import uvicorn
 from typing import List
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 app = FastAPI()
+
+
 # Получение списка всех рецептов
-@app.get("/recipes/", response_model=List[schemas.Recipe])
+@app.get("/recipes/", response_model=List[schemas.RecipeGet])
 def get_all_recipes(session: Session = Depends(get_db)):
     recipe_db = session.query(Recipe).all()
     return recipe_db
 
 
 # Получение рецепта по id
-@app.get("/recipes/{recipe_id}", response_model=schemas.Recipe)
+@app.get("/recipes/{recipe_id}", response_model=schemas.RecipeGet)
 def get_recipe_by_id(recipe_id: int, session: Session = Depends(get_db)):
     recipe_db = session.query(Recipe).filter_by(id=recipe_id).first()
     if recipe_db is None:
@@ -27,7 +29,7 @@ def get_recipe_by_id(recipe_id: int, session: Session = Depends(get_db)):
 
 # Добавление рецепта в бд
 @app.post("/recipes/add_recipe")
-def add_new_recipe(recipe: schemas.RecipeUpdate, session: Session = Depends(get_db)):
+def add_new_recipe(recipe: schemas.RecipePost, session: Session = Depends(get_db)):
     steps = [Step(**step.dict()) for step in recipe.steps]
     ingredients = [Ingredient(**ingredient.dict()) for ingredient in recipe.ingredients]
     recipe_db = Recipe(name=recipe.name, description=recipe.description, ingredients=ingredients, steps=steps)
@@ -36,12 +38,13 @@ def add_new_recipe(recipe: schemas.RecipeUpdate, session: Session = Depends(get_
     session.refresh(recipe_db)
 
     spec_functions.check_unique_ingredients(session, ingredients)
+
     return recipe
 
 
 # Обновление информации о рецепте из бд
 @app.put("/recipes/update/{recipe_id}")
-def update_recipe_by_id(recipe: schemas.RecipeUpdate, recipe_id: int, session: Session = Depends(get_db)):
+def update_recipe_by_id(recipe: schemas.RecipePost, recipe_id: int, session: Session = Depends(get_db)):
     recipe_db = session.query(Recipe).filter_by(id=recipe_id).first()
     if not recipe_db:
         return {"error": "Recipe not found"}

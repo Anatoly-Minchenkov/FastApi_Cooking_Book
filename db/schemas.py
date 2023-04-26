@@ -18,10 +18,10 @@ class Step(BaseModel):
         orm_mode = True
 
 
-class Recipe(BaseModel):
+class RecipeGet(BaseModel):
     id: int
     name: str
-    description: str
+    description: Optional[str]
     ingredients: List[Ingredient]
     steps: List[Step]
 
@@ -29,7 +29,7 @@ class Recipe(BaseModel):
         orm_mode = True
 
 
-class RecipeUpdate(BaseModel):
+class RecipePost(BaseModel):
     name: str
     description: Optional[str] = None
     ingredients: Optional[List[Ingredient]] = []
