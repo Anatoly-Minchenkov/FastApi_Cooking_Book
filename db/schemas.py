@@ -6,20 +6,14 @@ class Ingredient(BaseModel):
     name: str
     quantity: Optional[float] = 0.0
 
-    # recipe_id: int
-    # recipe: 'Recipe'
     class Config:
         orm_mode = True
-
 
 
 class Step(BaseModel):
     step_description: str
     step_time: int
 
-    # id: int
-    # recipe_id: int
-    # recipe: 'Recipe'
     class Config:
         orm_mode = True
 
@@ -34,6 +28,7 @@ class Recipe(BaseModel):
     class Config:
         orm_mode = True
 
+
 class RecipeUpdate(BaseModel):
     name: str
     description: Optional[str] = None
@@ -42,4 +37,3 @@ class RecipeUpdate(BaseModel):
 
     class Config:
         orm_mode = True
-
