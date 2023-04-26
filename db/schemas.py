@@ -13,6 +13,7 @@ class Ingredient(BaseModel):
 class Step(BaseModel):
     step_description: str
     step_time: int
+    # recipe_id: int
 
     class Config:
         orm_mode = True

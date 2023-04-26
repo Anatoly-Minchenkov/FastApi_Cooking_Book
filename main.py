@@ -2,11 +2,12 @@ from db.models import *
 from db import schemas
 import spec_functions
 from connector import get_db
-from collections import OrderedDict
+
 import uvicorn
-from typing import List
-from fastapi import FastAPI, Depends, HTTPException
+from typing import List, Optional
+from fastapi import FastAPI, Depends, HTTPException, Body
 from sqlalchemy.orm import Session
+from sqlalchemy import func, and_
 
 app = FastAPI()
 
@@ -19,7 +20,7 @@ def get_all_recipes(session: Session = Depends(get_db)):
 
 
 # Получение рецепта по id
-@app.get("/recipes/{recipe_id}", response_model=schemas.RecipeGet)
+@app.get("/recipes/{recipe_id}/", response_model=schemas.RecipeGet)
 def get_recipe_by_id(recipe_id: int, session: Session = Depends(get_db)):
     recipe_db = session.query(Recipe).filter_by(id=recipe_id).first()
     if recipe_db is None:
@@ -28,7 +29,7 @@ def get_recipe_by_id(recipe_id: int, session: Session = Depends(get_db)):
 
 
 # Добавление рецепта в бд
-@app.post("/recipes/add_recipe")
+@app.post("/recipes/add_recipe/")
 def add_new_recipe(recipe: schemas.RecipePost, session: Session = Depends(get_db)):
     steps = [Step(**step.dict()) for step in recipe.steps]
     ingredients = [Ingredient(**ingredient.dict()) for ingredient in recipe.ingredients]
@@ -43,7 +44,7 @@ def add_new_recipe(recipe: schemas.RecipePost, session: Session = Depends(get_db
 
 
 # Обновление информации о рецепте из бд
-@app.put("/recipes/update/{recipe_id}")
+@app.put("/recipes/update/{recipe_id}/")
 def update_recipe_by_id(recipe: schemas.RecipePost, recipe_id: int, session: Session = Depends(get_db)):
     recipe_db = session.query(Recipe).filter_by(id=recipe_id).first()
     if not recipe_db:
@@ -74,7 +75,7 @@ def update_recipe_by_id(recipe: schemas.RecipePost, recipe_id: int, session: Ses
 
 
 # Удаление рецепта из бд
-@app.delete("/recipes/delete/{recipe_id}")
+@app.delete("/recipes/delete/{recipe_id}/")
 def delete_recipe_by_id(recipe_id: int, session: Session = Depends(get_db)):
     recipe_db = session.query(Recipe).filter_by(id=recipe_id).first()
     if recipe_db is None:
@@ -84,6 +85,27 @@ def delete_recipe_by_id(recipe_id: int, session: Session = Depends(get_db)):
     session.commit()
     return {"message": f"Recipe with id {recipe_id} has been deleted."}
 
+# Сортировка по времени
+@app.get("/recipes/sort_by_cooking_time", response_model=List[schemas.RecipeGet])
+def sort_recipes_by_time(desc: Optional[bool] = False, session: Session = Depends(get_db)):
+    recipes = session.query(Recipe).join(Step).group_by(Recipe).order_by(func.sum(Step.step_time)).all()
+    if desc:
+        recipes.reverse()
+    return recipes
+
+@app.post("/recipes/filter_by_ingredients", response_model=List[schemas.RecipeGet]) #
+def filter_recipes_by_ingredients(ingredients: List[str], session: Session = Depends(get_db)):
+    unique_ingredients = session.query(UniqueIngredient).all()
+    unique_ingredient_names = [ingredient.name for ingredient in unique_ingredients] # уникальные имена из бд
+    # список поступивших ингредиентов, которые есть в бд
+    received_ingredients = [ingredient for ingredient in ingredients
+                            if ingredient in unique_ingredient_names]
+
+    # Join между Recipe+Ingredient, фильтрация по имени, группировка по id, и сверка количества ингредиентов группы
+    recipes = (session.query(Recipe).join(Ingredient).filter(Ingredient.name.in_(received_ingredients))
+               .group_by(Recipe.id).having(func.count(Ingredient.name) == len(received_ingredients)).all())
+
+    return recipes
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
