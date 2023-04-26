@@ -4,7 +4,7 @@ from pydantic import BaseModel
 
 class Ingredient(BaseModel):
     name: str
-    quantity: Optional[float] = 0.0
+    quantity: Optional[str] = 'По вкусу'
 
     class Config:
         orm_mode = True

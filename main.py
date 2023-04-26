@@ -1,11 +1,11 @@
 from db.models import *
 from db import schemas
 import spec_functions
-from connector import get_db
+from db.connector import get_db
 
 import uvicorn
 from typing import List, Optional
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
@@ -31,7 +31,7 @@ def get_recipe_by_id(recipe_id: int, session: Session = Depends(get_db)):
 @app.post("/recipes/add_recipe/")
 def add_new_recipe(recipe: schemas.RecipePost, session: Session = Depends(get_db)):
     steps = [Step(**step.dict()) for step in recipe.steps]
-    ingredients = [Ingredient(**ingredient.dict()) for ingredient in recipe.ingredients]
+    ingredients = [Ingredient(name=ingredient.name.lower(), quantity=ingredient.quantity) for ingredient in recipe.ingredients]
     recipe_db = Recipe(name=recipe.name, description=recipe.description, ingredients=ingredients, steps=steps)
     session.add(recipe_db)
     session.commit()
@@ -49,7 +49,7 @@ def update_recipe_by_id(recipe: schemas.RecipePost, recipe_id: int, session: Ses
     session.query(Ingredient).filter_by(recipe_id=recipe_id).delete()
     # Добавление новых ингредиентов, если есть
     if recipe.ingredients:
-        new_ingredients = [Ingredient(name=ingredient.name, quantity=ingredient.quantity, recipe_id=recipe_id)
+        new_ingredients = [Ingredient(name=ingredient.name.lower(), quantity=ingredient.quantity, recipe_id=recipe_id)
                            for ingredient in recipe.ingredients]
         session.add_all(new_ingredients)
         # Проверка на новые уникальные ингредиенты
@@ -118,10 +118,10 @@ def filter_recipes_by_ingredients(ingredients: List[str], session: Session = Dep
     переданные ингредиенты входят
     '''
     unique_ingredients = session.query(UniqueIngredient).all()
-    unique_ingredient_names = [ingredient.name for ingredient in unique_ingredients] # уникальные имена из бд
+    unique_ingredient_names = [ingredient.name.lower() for ingredient in unique_ingredients] # уникальные имена из бд
     # список поступивших ингредиентов, которые есть в бд
-    received_ingredients = [ingredient for ingredient in ingredients
-                            if ingredient in unique_ingredient_names]
+    received_ingredients = [ingredient.lower() for ingredient in ingredients
+                            if ingredient.lower() in unique_ingredient_names]
 
     # Join между Recipe+Ingredient, фильтрация по имени, группировка по id, и сверка количества ингредиентов группы
     recipes = (session.query(Recipe).join(Ingredient).filter(Ingredient.name.in_(received_ingredients))
