@@ -31,7 +31,8 @@ def get_recipe_by_id(recipe_id: int, session: Session = Depends(get_db)):
 @app.post("/recipes/add_recipe/")
 def add_new_recipe(recipe: schemas.RecipePost, session: Session = Depends(get_db)):
     steps = [Step(**step.dict()) for step in recipe.steps]
-    ingredients = [Ingredient(name=ingredient.name.lower(), quantity=ingredient.quantity) for ingredient in recipe.ingredients]
+    ingredients = [Ingredient(name=ingredient.name.lower(), quantity=ingredient.quantity) for ingredient in
+                   recipe.ingredients]
     recipe_db = Recipe(name=recipe.name, description=recipe.description, ingredients=ingredients, steps=steps)
     session.add(recipe_db)
     session.commit()
@@ -79,6 +80,7 @@ def delete_recipe_by_id(recipe_id: int, session: Session = Depends(get_db)):
     session.commit()
     return {"message": f"Recipe with id {recipe_id} has been deleted."}
 
+
 # Сортировка рецептов по общему времени приготовления
 @app.get("/recipes/sort_by_cooking_time", response_model=List[schemas.RecipeGet])
 def sort_recipes_by_time(desc: Optional[bool] = False, session: Session = Depends(get_db)):
@@ -90,6 +92,7 @@ def sort_recipes_by_time(desc: Optional[bool] = False, session: Session = Depend
     if desc:
         recipes.reverse()
     return recipes
+
 
 # Фильтрация по максимальному времени приготовления + сортировка
 @app.get("/recipes/filter_by_cooking_time/{max_cooking_time}", response_model=List[schemas.RecipeGet])
@@ -110,15 +113,16 @@ def filter_recipes_by_time(max_cooking_time: int, gt: Optional[bool] = False, de
         recipes.reverse()
     return recipes
 
+
 # Фильтрация по переданному списку ингредиентов
-@app.post("/recipes/filter_by_ingredients", response_model=List[schemas.RecipeGet]) #
+@app.post("/recipes/filter_by_ingredients", response_model=List[schemas.RecipeGet])  #
 def filter_recipes_by_ingredients(ingredients: List[str], session: Session = Depends(get_db)):
     '''
     Функция принимает список ингредиентов, и возвращает рецепты, в состав которых
     переданные ингредиенты входят
     '''
     unique_ingredients = session.query(UniqueIngredient).all()
-    unique_ingredient_names = [ingredient.name.lower() for ingredient in unique_ingredients] # уникальные имена из бд
+    unique_ingredient_names = [ingredient.name.lower() for ingredient in unique_ingredients]  # уникальные имена из бд
     # список поступивших ингредиентов, которые есть в бд
     received_ingredients = [ingredient.lower() for ingredient in ingredients
                             if ingredient.lower() in unique_ingredient_names]
@@ -127,6 +131,7 @@ def filter_recipes_by_ingredients(ingredients: List[str], session: Session = Dep
     recipes = (session.query(Recipe).join(Ingredient).filter(Ingredient.name.in_(received_ingredients))
                .group_by(Recipe.id).having(func.count(Ingredient.name) == len(received_ingredients)).all())
     return recipes
+
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)

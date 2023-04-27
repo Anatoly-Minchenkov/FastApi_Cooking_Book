@@ -1,12 +1,14 @@
+from os import getenv
 from sqlalchemy import create_engine
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
+from dotenv import load_dotenv, find_dotenv
 
+load_dotenv(find_dotenv())
 
-SQLALCHEMY_DATABASE_URL = "postgresql://bcraft:password@localhost:5432/bcraft"
+DATABASE_URL = getenv('DATABASE_URL')
 
 def get_db():
-    engine = create_engine(SQLALCHEMY_DATABASE_URL)
+    engine = create_engine(DATABASE_URL)
     session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     db = None
     try:

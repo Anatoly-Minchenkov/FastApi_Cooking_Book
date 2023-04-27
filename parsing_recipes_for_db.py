@@ -1,11 +1,16 @@
+from os import getenv
 import requests
 from bs4 import BeautifulSoup
+from dotenv import load_dotenv, find_dotenv
+
+load_dotenv(find_dotenv())
 
 
 def write_to_db_by_FastAPI(name, description, ingredients, steps):
     data = {'name': name, 'description': description, 'ingredients': ingredients, 'steps': steps}
-    fastapi_response = requests.post("http://localhost:8000/recipes/add_recipe/", json=data)
-    print(fastapi_response.json())
+    fastapi_response = requests.post(getenv('POST_URL'), json=data)
+    if fastapi_response.status_code == 200:
+        print(fastapi_response.json())
 
 
 def clean_time_to_minuets(soup):
@@ -26,7 +31,7 @@ def clean_time_to_minuets(soup):
     return clean_time
 
 
-def main():
+def parse_recipes():
     for i in range(1, 3):
         url = f'https://1000.menu/ajax/free/content_ratings/all?page={i}'
         response = requests.get(url=url)
@@ -48,4 +53,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    parse_recipes()

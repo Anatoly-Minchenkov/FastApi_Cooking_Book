@@ -1,5 +1,5 @@
 from fastapi import HTTPException
-from db.models import *
+from db.models import Recipe
 from db.models import UniqueIngredient
 
 def get_recipe_by_id(recipe_id, session):
