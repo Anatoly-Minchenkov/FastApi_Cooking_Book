@@ -1,0 +1,56 @@
+from os import getenv
+import requests
+from bs4 import BeautifulSoup
+from dotenv import load_dotenv, find_dotenv
+
+load_dotenv(find_dotenv())
+
+
+def write_to_db_by_FastAPI(name, description, ingredients, steps):
+    data = {'name': name, 'description': description, 'ingredients': ingredients, 'steps': steps}
+    fastapi_response = requests.post(getenv('POST_URL'), json=data)
+    if fastapi_response.status_code == 200:
+        print(fastapi_response.json())
+
+
+def clean_time_to_minuets(soup):
+    dirty_time = soup.select_one('#pt_steps strong').text
+    if 'д' in dirty_time:
+        clean_time = int(dirty_time.split()[0]) * 1440
+    elif 'ч' in dirty_time and 'мин' in dirty_time:
+        time = dirty_time.split()
+        hours = int(time[0]) * 60
+        minutes = int(time[2])
+        clean_time = hours + minutes
+    elif 'ч' in dirty_time:
+        clean_time = int(dirty_time.split()[0]) * 60
+    elif 'мин' in dirty_time:
+        clean_time = int(dirty_time.split()[0])
+    else:
+        clean_time = 10
+    return clean_time
+
+
+def parse_recipes():
+    for i in range(1, 3):
+        url = f'https://1000.menu/ajax/free/content_ratings/all?page={i}'
+        response = requests.get(url=url)
+        response.encoding = 'utf-8'
+        soup = BeautifulSoup(response.text, 'lxml')
+        recipes_links = ['https://1000.menu' + link['href'] for link in soup.find_all('a', class_='h5')]
+        for link in recipes_links:
+            response = requests.get(url=link)
+            response.encoding = 'utf-8'
+            soup = BeautifulSoup(response.text, 'lxml')
+            name = soup.select_one('h1').text
+            description = soup.select_one('.description').text
+            ingredients = [{"name": i['content'].split('-')[0].strip(), "quantity": i['content'].split('-')[-1].strip()}
+                           for i in soup.select('#ingredients #recept-list .ingredient [itemprop="recipeIngredient"]')]
+            steps_values = soup.select('.instructions li p')
+            time = int(clean_time_to_minuets(soup) / len(steps_values))
+            steps = [{'step_description': i.text.strip(), 'step_time': time} for i in steps_values]
+            write_to_db_by_FastAPI(name, description, ingredients, steps)
+
+
+if __name__ == "__main__":
+    parse_recipes()

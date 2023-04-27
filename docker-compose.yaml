@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  api:
+    build: .
+    container_name: cooking_book
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    networks:
+      - api_network
+
+
+  db:
+    container_name: db_recipes
+    environment:
+      POSTGRES_USER: recipes
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: recipes
+    ports:
+      - '1234:5432'
+    image: postgres:14.5
+    networks:
+      - api_network
+
+networks:
+  api_network:
