@@ -33,3 +33,24 @@ PGPASSWORD=password pg_restore --verbose --clean --no-acl --no-owner -h db_recip
 3) Запустить файл parsing_recipes_for_db.py, дождаться завершения заполнения таблицы
 4) Выполнить в консоли команду ```uvicorn main:app --reload```
 5) Ознакомиться с документацией проекта по адресу http://127.0.0.1:8000/docs
+
+---
+**Шаблон запроса на добавление рецепта:**
+```
+{
+  "name": "string",
+  "description": "string",
+  "ingredients": [
+    {
+      "name": "string",
+      "quantity": "string"
+    }
+  ],
+  "steps": [
+    {
+      "step_description": "string",
+      "step_time": int
+    }
+  ]
+}
+```
