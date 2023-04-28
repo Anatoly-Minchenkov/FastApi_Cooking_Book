@@ -1,3 +1,9 @@
+from fastapi_users import FastAPIUsers
+
+from auth.ayth import auth_backend
+from auth.auth_manager import get_user_manager
+from auth.auth_schemas import UserRead, UserCreate
+
 from db.models import *
 from db import schemas
 import spec_functions
@@ -10,6 +16,28 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 
 app = FastAPI()
+
+fastapi_users = FastAPIUsers[User, int](
+    get_user_manager,
+    [auth_backend],
+)
+
+current_user = fastapi_users.current_user()
+
+
+#регистрация
+app.include_router(
+    fastapi_users.get_register_router(UserRead, UserCreate),
+    prefix="/auth",
+    tags=["auth"],
+)
+
+#авторизация
+app.include_router(
+    fastapi_users.get_auth_router(auth_backend),
+    prefix="/auth/jwt",
+    tags=["auth"],
+)
 
 
 # Получение списка всех рецептов
@@ -31,7 +59,7 @@ def get_recipe_by_id(recipe_id: int, session: Session = Depends(get_db)):
 
 # Добавление рецепта в бд
 @app.post("/recipes/add_recipe/")
-def add_new_recipe(recipe: schemas.RecipePost, session: Session = Depends(get_db)):
+def add_new_recipe(recipe: schemas.RecipePost, session: Session = Depends(get_db), _: User = Depends(current_user)):
     '''Добавить рецепт в бд'''
     steps = [Step(**step.dict()) for step in recipe.steps]
     ingredients = [Ingredient(name=ingredient.name.lower(), quantity=ingredient.quantity) for ingredient in
@@ -46,7 +74,8 @@ def add_new_recipe(recipe: schemas.RecipePost, session: Session = Depends(get_db
 
 # Обновление информации о рецепте по id
 @app.put("/recipes/update/{recipe_id}/")
-def update_recipe_by_id(recipe: schemas.RecipePost, recipe_id: int, session: Session = Depends(get_db)):
+def update_recipe_by_id(recipe: schemas.RecipePost, recipe_id: int, session: Session = Depends(get_db),
+                        _: User = Depends(current_user)):
     '''Обновить информацию о рецепте, по его id в бд'''
     recipe_db = spec_functions.get_recipe_by_id(recipe_id, session)
     spec_functions.check_recipe_not_none(recipe_db, session)
@@ -77,7 +106,7 @@ def update_recipe_by_id(recipe: schemas.RecipePost, recipe_id: int, session: Ses
 
 # Удаление рецепта из бд
 @app.delete("/recipes/delete/{recipe_id}/")
-def delete_recipe_by_id(recipe_id: int, session: Session = Depends(get_db)):
+def delete_recipe_by_id(recipe_id: int, session: Session = Depends(get_db), _: User = Depends(current_user)):
     '''Удалить рецепт по его id в бд'''
     recipe_db = spec_functions.get_recipe_by_id(recipe_id, session)
     spec_functions.check_recipe_not_none(recipe_db, session)

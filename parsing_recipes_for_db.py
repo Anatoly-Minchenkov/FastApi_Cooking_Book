@@ -4,11 +4,11 @@ from bs4 import BeautifulSoup
 from dotenv import load_dotenv, find_dotenv
 
 load_dotenv(find_dotenv())
-
+POST_URL = getenv('POST_URL')
 
 def write_to_db_by_FastAPI(name, description, ingredients, steps):
     data = {'name': name, 'description': description, 'ingredients': ingredients, 'steps': steps}
-    fastapi_response = requests.post(getenv('POST_URL'), json=data)
+    fastapi_response = requests.post(POST_URL, json=data)
     if fastapi_response.status_code == 200:
         print(fastapi_response.json())
 

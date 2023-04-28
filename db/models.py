@@ -1,13 +1,28 @@
 from os import getenv
-from sqlalchemy import Column, String, Integer, ForeignKey, create_engine
-from sqlalchemy.orm import relationship
-from sqlalchemy.ext.declarative import declarative_base
+from datetime import datetime
+from sqlalchemy import Column, String, Integer, ForeignKey, create_engine, TIMESTAMP, Boolean
+from sqlalchemy.orm import relationship, Mapped, mapped_column, DeclarativeBase
 from dotenv import load_dotenv, find_dotenv
+
 load_dotenv(find_dotenv())
 
-
 engine = create_engine(getenv('DATABASE_URL'))
-Base = declarative_base()
+
+
+class Base(DeclarativeBase):
+    pass
+
+
+class User(Base):
+    __tablename__ = 'user'
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    email: Mapped[str] = mapped_column(String(length=320), unique=True, index=True, nullable=False)
+    hashed_password: Mapped[str] = mapped_column(String(length=1024), nullable=False)
+    registered_at: Mapped[datetime] = mapped_column(TIMESTAMP, default=datetime.utcnow)
+
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    is_superuser: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    is_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
 
 class Recipe(Base):
