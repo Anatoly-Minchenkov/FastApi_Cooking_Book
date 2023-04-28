@@ -33,8 +33,8 @@ class RecipeGet(BaseModel):
 class RecipePost(BaseModel):
     name: str
     description: Optional[str] = None
-    ingredients: Optional[List[Ingredient]] = []
-    steps: Optional[List[Step]] = []
+    ingredients: Optional[List[Ingredient]]
+    steps: Optional[List[Step]]
 
     class Config:
         orm_mode = True
