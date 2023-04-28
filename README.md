@@ -48,13 +48,15 @@ PGPASSWORD=password pg_restore --verbose --clean --no-acl --no-owner -h db_recip
 {
   "name": "string",
   "description": "string",
-  "ingredients": [
+  "ingredients": 
+  [
     {
       "name": "string",
       "quantity": "string"
     }
   ],
-  "steps": [
+  "steps": 
+  [
     {
       "step_description": "string",
       "step_time": int
