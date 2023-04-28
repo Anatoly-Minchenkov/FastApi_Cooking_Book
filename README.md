@@ -12,7 +12,7 @@
 - Парсинг рецептов для заполнения бд через API, с сайта 1000.menu;
 - Интеграция с docker-compose, и подъем бд из дампа.
 
-![](docs_picture.png)
+![](docs_image.png)
 
 ---
 ### :hammer_and_wrench: Установка:
