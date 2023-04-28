@@ -15,6 +15,7 @@ app = FastAPI()
 # Получение списка всех рецептов
 @app.get("/recipes/", response_model=List[schemas.RecipeGet])
 def get_all_recipes(session: Session = Depends(get_db)):
+    '''Получить список всех рецепты из бд'''
     recipe_db = session.query(Recipe).all()
     return recipe_db
 
@@ -22,6 +23,7 @@ def get_all_recipes(session: Session = Depends(get_db)):
 # Получение рецепта по id
 @app.get("/recipes/{recipe_id}/", response_model=schemas.RecipeGet)
 def get_recipe_by_id(recipe_id: int, session: Session = Depends(get_db)):
+    '''Получить рецепт по его id в бд'''
     recipe_db = spec_functions.get_recipe_by_id(recipe_id, session)
     spec_functions.check_recipe_not_none(recipe_db, session)
     return recipe_db
@@ -30,6 +32,7 @@ def get_recipe_by_id(recipe_id: int, session: Session = Depends(get_db)):
 # Добавление рецепта в бд
 @app.post("/recipes/add_recipe/")
 def add_new_recipe(recipe: schemas.RecipePost, session: Session = Depends(get_db)):
+    '''Добавить рецепт в бд'''
     steps = [Step(**step.dict()) for step in recipe.steps]
     ingredients = [Ingredient(name=ingredient.name.lower(), quantity=ingredient.quantity) for ingredient in
                    recipe.ingredients]
@@ -44,6 +47,7 @@ def add_new_recipe(recipe: schemas.RecipePost, session: Session = Depends(get_db
 # Обновление информации о рецепте по id
 @app.put("/recipes/update/{recipe_id}/")
 def update_recipe_by_id(recipe: schemas.RecipePost, recipe_id: int, session: Session = Depends(get_db)):
+    '''Обновить информацию о рецепте, по его id в бд'''
     recipe_db = spec_functions.get_recipe_by_id(recipe_id, session)
     spec_functions.check_recipe_not_none(recipe_db, session)
     # Удаление старых ингредиентов
@@ -74,6 +78,7 @@ def update_recipe_by_id(recipe: schemas.RecipePost, recipe_id: int, session: Ses
 # Удаление рецепта из бд
 @app.delete("/recipes/delete/{recipe_id}/")
 def delete_recipe_by_id(recipe_id: int, session: Session = Depends(get_db)):
+    '''Удалить рецепт по его id в бд'''
     recipe_db = spec_functions.get_recipe_by_id(recipe_id, session)
     spec_functions.check_recipe_not_none(recipe_db, session)
     session.delete(recipe_db)

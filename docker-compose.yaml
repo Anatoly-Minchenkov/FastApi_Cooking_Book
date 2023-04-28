@@ -13,14 +13,12 @@ services:
 
 
   db:
+    build:
+      context: .
+      dockerfile: Dockerfile.db
     container_name: db_recipes
-    environment:
-      POSTGRES_USER: recipes
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: recipes
     ports:
       - '1234:5432'
-    image: postgres:14.5
     networks:
       - api_network
 
