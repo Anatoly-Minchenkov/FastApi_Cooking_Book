@@ -27,10 +27,12 @@ PGPASSWORD=password pg_restore --verbose --clean --no-acl --no-owner -h db_recip
 #
 - **Без Docker, с заполнением таблицы парсингом:**
 1. $ pip install -r requirements.txt
-2. Установить в файле **.env** актуальное значение переменной DATABASE_URL, и установить localhost в POST_URL
+2. Установить в файле **.env** актуальное значение переменной DATABASE_URL/ASYNC_DATABASE_URL, и установить localhost в остальны переменные
 
        - DATABASE_URL = "postgresql://login:password@localhost:5432/db_name"
+       - ASYNC_DATABASE_URL = "postgresql+asyncpg://recipes:password@localhost:5432/recipes"
        - POST_URL = "http://localhost:8000/recipes/add_recipe/"
+       - LOGIN_URL = "http://localhost:8000/auth/jwt/login"
 3) Запустить файл parsing_recipes_for_db.py, дождаться завершения заполнения таблицы
 4) Выполнить в консоли команду ```uvicorn main:app --reload```
 
