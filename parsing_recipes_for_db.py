@@ -7,7 +7,10 @@ load_dotenv(find_dotenv())
 POST_URL = getenv('POST_URL')
 LOGIN_URL = getenv('LOGIN_URL')
 session = requests.Session()
+
+
 def set_auth_token():
+    '''Авторизация через тестового юзера'''
     auth_response = session.post(LOGIN_URL, data={"username": 'test@gmail.com', "password": 'test'})
     if auth_response.status_code != 200:
         raise ValueError("Failed to authenticate")

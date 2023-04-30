@@ -24,15 +24,15 @@ fastapi_users = FastAPIUsers[User, int](
 
 current_user = fastapi_users.current_user()
 
-
-#регистрация
+# регистрация
 app.include_router(
     fastapi_users.get_register_router(UserRead, UserCreate),
     prefix="/auth",
     tags=["auth"],
+
 )
 
-#авторизация
+# авторизация
 app.include_router(
     fastapi_users.get_auth_router(auth_backend),
     prefix="/auth/jwt",
