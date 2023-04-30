@@ -35,6 +35,7 @@ PGPASSWORD=password pg_restore --verbose --clean --no-acl --no-owner -h db_recip
        - LOGIN_URL = "http://localhost:8000/auth/jwt/login"
 3) Запустить файл parsing_recipes_for_db.py, дождаться завершения заполнения таблицы
 4) Выполнить в консоли команду ```uvicorn main:app --reload```
+5) Ознакомиться с документацией проекта по адресу http://127.0.0.1:8000/docs
 
 ---
 ### :bookmark_tabs: Особенности
