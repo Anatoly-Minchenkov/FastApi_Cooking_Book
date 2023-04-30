@@ -5,12 +5,23 @@ from dotenv import load_dotenv, find_dotenv
 
 load_dotenv(find_dotenv())
 POST_URL = getenv('POST_URL')
+LOGIN_URL = getenv('LOGIN_URL')
+session = requests.Session()
+def set_auth_token():
+    auth_response = session.post(LOGIN_URL, data={"username": 'test@gmail.com', "password": 'test'})
+    if auth_response.status_code != 200:
+        raise ValueError("Failed to authenticate")
+    token = session.cookies.get_dict()['recipe_user']
+    session.cookies.set("recipe_user", f"{token}")
+
 
 def write_to_db_by_FastAPI(name, description, ingredients, steps):
     data = {'name': name, 'description': description, 'ingredients': ingredients, 'steps': steps}
-    fastapi_response = requests.post(POST_URL, json=data)
+    fastapi_response = session.post(POST_URL, json=data)
     if fastapi_response.status_code == 200:
         print(fastapi_response.json())
+    else:
+        print(fastapi_response.status_code)
 
 
 def clean_time_to_minuets(soup):
@@ -32,6 +43,7 @@ def clean_time_to_minuets(soup):
 
 
 def parse_recipes():
+    set_auth_token()
     for i in range(1, 3):
         url = f'https://1000.menu/ajax/free/content_ratings/all?page={i}'
         response = requests.get(url=url)
